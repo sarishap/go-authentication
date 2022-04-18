@@ -1,0 +1,50 @@
+type User{
+  id: ID!
+  username: String!
+  email: String!
+  password: String!
+}
+
+type UserDetail{
+  id: ID!
+  name: String!
+  address: String!
+  phone: String!
+  User:User!
+}
+
+type Query{
+ UserDetails: [UserDetail!]!
+ Users: [User!]!
+}
+
+input NewUser{
+  UserID: ID!
+  email: String!
+  password: String!
+}
+
+input Login{
+  email: String!
+  password: String!
+}
+
+input NewUserDetail{
+  UserID: ID!
+  name: String!
+  phone: String!
+  address: String!
+}
+
+type AuthResponse{
+  token: String!
+  refreshToken: String!
+}
+
+type Mutation {
+  CreateUserDetail(input: NewUserDetail): UserDetail!
+  Register(input: NewUser): User!
+  login(input: Login!): AuthResponse!
+  forgotPassword(newPassword: String!, key: String!): String!
+  refreshToken(token:String!, refreshToken: String!): AuthResponse!
+}

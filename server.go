@@ -7,8 +7,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
+	"github.com/sarishap/go-authentication/database"
 	"github.com/sarishap/go-authentication/graph"
 	"github.com/sarishap/go-authentication/graph/generated"
+	"github.com/sarishap/go-authentication/middleware/auth"
 )
 
 const defaultPort = "8080"
@@ -18,6 +21,10 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
+	router := chi.NewRouter()
+
+	router.Use(auth.Middleware())
+	database.Init()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 

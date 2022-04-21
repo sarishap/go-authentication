@@ -15,17 +15,19 @@ type UserDetail{
 
 type Query{
  UserDetails: [UserDetail!]!
- Users: [User!]!
-}
 
+}
+#for Registration 
 input NewUser{
-  UserID: ID!
-  email: String!
+  username : String!
   password: String!
 }
 
+input RefreshTokenInput{
+  token: String!
+}
 input Login{
-  email: String!
+  username: String!
   password: String!
 }
 
@@ -35,16 +37,17 @@ input NewUserDetail{
   phone: String!
   address: String!
 }
-
-type AuthResponse{
-  token: String!
-  refreshToken: String!
+input UpdatePassword{
+  username: String!
+  newPassword: String!
 }
+
 
 type Mutation {
   CreateUserDetail(input: NewUserDetail): UserDetail!
-  Register(input: NewUser): User!
-  login(input: Login!): AuthResponse!
-  forgotPassword(newPassword: String!, key: String!): String!
-  refreshToken(token:String!, refreshToken: String!): AuthResponse!
+  Register(input: NewUser): String!
+  login(input: Login!): String!
+  forgotPassword(input:UpdatePassword): String!
+  refreshToken(input: RefreshTokenInput!): String!
+  
 }

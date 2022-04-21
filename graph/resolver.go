@@ -1,6 +1,8 @@
 package graph
 
-import "github.com/sarishap/go-authentication/graph/model"
+import (
+	"github.com/sarishap/go-authentication/graph/model"
+)
 
 // This file will not be regenerated automatically.
 //

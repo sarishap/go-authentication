@@ -2,19 +2,13 @@
 
 package model
 
-type AuthResponse struct {
-	Token        string `json:"token"`
-	RefreshToken string `json:"refreshToken"`
-}
-
 type Login struct {
-	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 type NewUser struct {
-	UserID   string `json:"UserID"`
-	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -23,6 +17,15 @@ type NewUserDetail struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Address string `json:"address"`
+}
+
+type RefreshTokenInput struct {
+	Token string `json:"token"`
+}
+
+type UpdatePassword struct {
+	Username    string `json:"username"`
+	NewPassword string `json:"newPassword"`
 }
 
 type User struct {

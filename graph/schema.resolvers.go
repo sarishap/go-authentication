@@ -5,47 +5,100 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math/rand"
+	"log"
+	"strconv"
 
 	"github.com/sarishap/go-authentication/graph/generated"
 	"github.com/sarishap/go-authentication/graph/model"
+	"github.com/sarishap/go-authentication/internal/userdetails"
+	"github.com/sarishap/go-authentication/internal/users"
+	"github.com/sarishap/go-authentication/jwt"
+	"github.com/sarishap/go-authentication/middleware/auth"
 )
 
 func (r *mutationResolver) CreateUserDetail(ctx context.Context, input *model.NewUserDetail) (*model.UserDetail, error) {
-	userdetails := &model.UserDetail{
-		ID:      fmt.Sprintf("%d", rand.Int()),
-		Name:    input.Name,
-		Phone:   input.Phone,
-		Address: input.Address,
-		User:    &model.User{ID: input.UserID, Username: input.Name},
+	user := auth.ForContext(ctx)
+	if user == nil {
+		return &model.UserDetail{}, errors.New("access denied")
 	}
-	r.userdetails = append(r.userdetails, userdetails)
-	return userdetails, nil
+	var userdetail userdetails.UserDetails
+	userdetail.User = user
+	UserID := userdetail.Save()
+	graphqlUser := &model.User{
+		ID:       user.ID,
+		Username: user.Username,
+	}
+	return &model.UserDetail{ID: strconv.FormatInt(UserID, 10), Name: userdetail.Name, Address: userdetail.Address, Phone: userdetail.Phone, User: graphqlUser}, nil
+
 }
 
-func (r *mutationResolver) Register(ctx context.Context, input *model.NewUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) Register(ctx context.Context, input *model.NewUser) (string, error) {
+	var user users.User
+	user.Username = input.Username
+	user.Password = input.Password
+	user.Create()
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
-func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model.AuthResponse, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
+	var user users.User
+	user.Username = input.Username
+	user.Password = input.Password
+	correct := user.Authenticate()
+	if !correct {
+		return "", errors.New("invalid username or password")
+	} else {
+		log.Println("User authenticated")
+	}
+
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
-func (r *mutationResolver) ForgotPassword(ctx context.Context, newPassword string, key string) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) ForgotPassword(ctx context.Context, input *model.UpdatePassword) (string, error) {
+	var user users.User
+	user.Password = input.NewPassword
+	user.Username = input.Username
+	user.UpdatePassword()
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
-func (r *mutationResolver) RefreshToken(ctx context.Context, token string, refreshToken string) (*model.AuthResponse, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
+	username, err := jwt.ParseToken(input.Token)
+	if err != nil {
+		return "", fmt.Errorf("access denied")
+	}
+	token, err := jwt.GenerateToken(username)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetail, error) {
-	return r.userdetails, nil
-}
-
-func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	var result []*model.UserDetail
+	dbUserDetails := userdetails.FetchData()
+	for _, userdetail := range dbUserDetails {
+		graphqlUser := &model.User{
+			//ID:       userdetail.User.ID,
+			Username: userdetail.User.Username,
+		}
+		result = append(result, &model.UserDetail{ID: userdetail.ID, Name: userdetail.Name, Address: userdetail.Address, User: graphqlUser})
+	}
+	return result, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/sarishap/go-authentication/database"
-	"github.com/sarishap/go-authentication/users"
+	"github.com/sarishap/go-authentication/internal/users"
 )
 
 type UserDetails struct {
@@ -16,27 +16,17 @@ type UserDetails struct {
 }
 
 func (userdetail UserDetails) Save() int64 {
-	stmt, err := database.Db.Prepare("INSERT INTO userdetails (name, address, phone) VALUES ($1, $2, $3)")
+	var lastInsertId int64
+	err := database.Db.QueryRow("INSERT INTO usersdetails (name,address,phone,user_id) VALUES($1,$2,$3,$4) RETURNING id", userdetail.Name, userdetail.Address, userdetail.Phone, userdetail.User.ID).Scan(&lastInsertId)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	res, err := stmt.Exec(userdetail.Name, userdetail.Address, userdetail.Phone)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Fatal("Error:", err.Error())
-	}
-	log.Print("Row inserted!")
-	return id
+	log.Println("Row inserted!")
+	return lastInsertId
 
 }
-
 func FetchData() []UserDetails {
-	stmt, err := database.Db.Prepare("select * from userdetails")
+	stmt, err := database.Db.Prepare("select UD.id, UD.name, UD.address, UD.phone,U.username from usersdetails UD inner join users U on UD.user_id= U.id")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +39,7 @@ func FetchData() []UserDetails {
 	var userdetails []UserDetails
 	for rows.Next() {
 		var userdetail UserDetails
-		err := rows.Scan(&userdetail.ID, &userdetail.Name, &userdetail.Address, &userdetail.Phone)
+		err := rows.Scan(&userdetail.ID, &userdetail.Name, &userdetail.Address, &userdetail.Phone, &userdetail.User.Username)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -59,5 +49,4 @@ func FetchData() []UserDetails {
 		log.Fatal(err)
 	}
 	return userdetails
-
 }

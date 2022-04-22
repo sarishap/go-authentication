@@ -25,6 +25,9 @@ func (r *mutationResolver) CreateUserDetail(ctx context.Context, input *model.Ne
 	}
 	var userdetail userdetails.UserDetails
 	userdetail.User = user
+	userdetail.Name = input.Name
+	userdetail.Address = input.Address
+	userdetail.Phone = input.Phone
 	UserID := userdetail.Save()
 	graphqlUser := &model.User{
 		ID:       user.ID,
@@ -92,11 +95,11 @@ func (r *queryResolver) UserDetails(ctx context.Context) ([]*model.UserDetail, e
 	var result []*model.UserDetail
 	dbUserDetails := userdetails.FetchData()
 	for _, userdetail := range dbUserDetails {
-		graphqlUser := &model.User{
-			//ID:       userdetail.User.ID,
+		ValidUser := &model.User{
+			ID:       userdetail.User.ID,
 			Username: userdetail.User.Username,
 		}
-		result = append(result, &model.UserDetail{ID: userdetail.ID, Name: userdetail.Name, Address: userdetail.Address, User: graphqlUser})
+		result = append(result, &model.UserDetail{ID: userdetail.ID, Name: userdetail.Name, Address: userdetail.Address, User: ValidUser})
 	}
 	return result, nil
 }

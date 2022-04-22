@@ -17,7 +17,6 @@ type User struct {
 
 func (user *User) Create() {
 	statement, err := database.Db.Prepare("INSERT INTO Users(Username,Password) VALUES($1,$2)")
-	print(statement)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,6 +28,7 @@ func (user *User) Create() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Data inserted!")
 }
 
 //HashPassword hashes given password

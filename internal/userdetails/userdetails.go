@@ -26,27 +26,30 @@ func (userdetail UserDetails) Save() int64 {
 
 }
 func FetchData() []UserDetails {
-	stmt, err := database.Db.Prepare("select UD.id, UD.name, UD.address, UD.phone,U.username from usersdetails UD inner join users U on UD.user_id= U.id")
+	stmt, err := database.Db.Query("select UD.id, UD.name, UD.address,UD.phone,UD.user_id, U.username from usersdetails UD inner join users U on UD.user_id = U.id")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
-	rows, err := stmt.Query()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
+
 	var userdetails []UserDetails
-	for rows.Next() {
-		var userdetail UserDetails
-		err := rows.Scan(&userdetail.ID, &userdetail.Name, &userdetail.Address, &userdetail.Phone, &userdetail.User.Username)
+	var username string
+	var id string
+	for stmt.Next() {
+		var userDetail UserDetails
+		err := stmt.Scan(&userDetail.ID, &userDetail.Name, &userDetail.Address, &userDetail.Phone, &id, &username)
 		if err != nil {
 			log.Fatal(err)
 		}
-		userdetails = append(userdetails, userdetail)
+		userDetail.User = &users.User{
+			ID:       id,
+			Username: username,
+		}
+		userdetails = append(userdetails, userDetail)
 	}
-	if err = rows.Err(); err != nil {
+	if err = stmt.Err(); err != nil {
 		log.Fatal(err)
 	}
 	return userdetails
+
 }
